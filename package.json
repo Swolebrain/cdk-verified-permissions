@@ -28,7 +28,7 @@
     "pre-compile": "npx projen pre-compile",
     "release": "npx projen release",
     "rosetta:extract": "npx projen rosetta:extract",
-    "test": "npx projen test",
+    "test": "CDK_DEBUG=true npx projen test",
     "test:watch": "npx projen test:watch",
     "unbump": "npx projen unbump",
     "upgrade": "npx projen upgrade",

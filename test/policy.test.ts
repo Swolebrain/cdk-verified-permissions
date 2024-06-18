@@ -1,3 +1,4 @@
+import * as path from 'path';
 import { Stack } from 'aws-cdk-lib';
 import { Template } from 'aws-cdk-lib/assertions';
 import {
@@ -336,6 +337,34 @@ when { true };`;
 
       // THEN
       expect(policy.policyId).toBe(policyId);
+    });
+  });
+
+  describe('Import policy from file', () => {
+    test('Importing a policy from a file', () => {
+      // GIVEN
+      const stack = new Stack();
+      const policyStore = new PolicyStore(stack, 'PolicyStore', {
+        validationSettings: {
+          mode: ValidationSettingsMode.OFF,
+        },
+      });
+
+      // WHEN
+      const policy = Policy.fromFile(
+        stack,
+        'ImportedPolicy',
+        {
+          path: path.join(__dirname, 'testpolicy.cedar'),
+          policyStore,
+        },
+      );
+
+      // THEN
+      expect(policy.policyId).toBeDefined();
+      expect(policy.policyType).toEqual(PolicyType.STATIC);
+      const policyStatement = policy.definition.static?.statement;
+      expect(policyStatement).toEqual('permit(principal == PodcastApp::User::"abc", action, PodcastApp::Application::"PodcastApp");');
     });
   });
 });

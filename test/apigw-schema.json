@@ -1,0 +1,159 @@
+{
+    "PodcastApp": {
+      "entityTypes": {
+        "User": {
+          "memberOfTypes": ["UserGroup"],
+          "shape": {
+            "type": "Record",
+            "attributes": {}
+          }
+        },
+        "UserGroup": {
+          "memberOfTypes": [],
+          "shape": {
+            "type": "Record",
+            "attributes": {}
+          }
+        },
+        "Application": {
+          "memberOfTypes": [],
+          "shape": {
+            "type": "Record",
+            "attributes": {}
+          }
+        }
+      },
+      "actions": {
+        "get /podcasts": {
+          "appliesTo": {
+            "principalTypes": ["User"],
+            "resourceTypes": ["Application"],
+            "context": {
+                "attributes": {},
+                "type": "Record"
+            }
+          }
+        },
+        "post /podcasts": {
+          "appliesTo": {
+            "principalTypes": ["User"],
+            "resourceTypes": ["Application"],
+            "context": {
+                "attributes": {},
+                "type": "Record"
+            }
+          }
+        },
+        "delete /podcasts": {
+          "appliesTo": {
+            "principalTypes": ["User"],
+            "resourceTypes": ["Application"],
+            "context": {
+                "attributes": {},
+                "type": "Record"
+            }
+          }
+        },
+        "get /artists": {
+          "appliesTo": {
+            "principalTypes": ["User"],
+            "resourceTypes": ["Application"],
+            "context": {
+                "attributes": {},
+                "type": "Record"
+            }
+          }
+        },
+        "post /artists": {
+          "appliesTo": {
+            "principalTypes": ["User"],
+            "resourceTypes": ["Application"],
+            "context": {
+                "attributes": {},
+                "type": "Record"
+            }
+          }
+        },
+        "delete /artists": {
+          "appliesTo": {
+            "principalTypes": ["User"],
+            "resourceTypes": ["Application"],
+            "context": {
+                "attributes": {},
+                "type": "Record"
+            }
+          }
+        },
+        "get /podcasts/{podcastId}": {
+          "appliesTo": {
+            "principalTypes": ["User"],
+            "resourceTypes": ["Application"],
+            "context": {
+                "attributes": {},
+                "type": "Record"
+            }
+          }
+        },
+        "post /podcasts/{podcastId}": {
+          "appliesTo": {
+            "principalTypes": ["User"],
+            "resourceTypes": ["Application"],
+            "context": {
+                "attributes": {},
+                "type": "Record"
+            }
+          }
+        },
+        "put /podcasts/{podcastId}": {
+          "appliesTo": {
+            "principalTypes": ["User"],
+            "resourceTypes": ["Application"],
+            "context": {
+                "attributes": {},
+                "type": "Record"
+            }
+          }
+        },
+        "patch /podcasts/{podcastId}": {
+          "appliesTo": {
+            "principalTypes": ["User"],
+            "resourceTypes": ["Application"],
+            "context": {
+                "attributes": {},
+                "type": "Record"
+            }
+          }
+        },
+        "delete /podcasts/{podcastId}": {
+          "appliesTo": {
+            "principalTypes": ["User"],
+            "resourceTypes": ["Application"],
+            "context": {
+                "attributes": {},
+                "type": "Record"
+            }
+          }
+        },
+        "patch /artists/{artistId}": {
+          "appliesTo": {
+            "principalTypes": ["User"],
+            "resourceTypes": ["Application"],
+            "context": {
+                "attributes": {},
+                "type": "Record"
+            }
+          }
+        },
+        "delete /artists/{artistId}": {
+          "appliesTo": {
+            "principalTypes": ["User"],
+            "resourceTypes": ["Application"],
+            "context": {
+                "attributes": {},
+                "type": "Record"
+            }
+          }
+        }
+      }
+    }
+  }

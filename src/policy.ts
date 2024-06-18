@@ -1,3 +1,4 @@
+import * as fs from 'fs';
 import { CfnPolicy } from 'aws-cdk-lib/aws-verifiedpermissions';
 import { IResource, Resource } from 'aws-cdk-lib/core';
 import { Construct } from 'constructs';
@@ -105,10 +106,26 @@ export interface PolicyProps {
   readonly definition: PolicyDefinitionProperty;
 
   /**
-   * The policy store that contains the policy.
+   * The policy store that the policy will be created under.
    */
   readonly policyStore: IPolicyStore;
 }
+
+export interface StaticPolicyFromFileProps {
+  /**
+   * The path to the file to be read which contains a single cedar statement representing a policy
+   */
+  path: string;
+  /**
+   * The policy store that the policy will be created under.
+   */
+  policyStore: IPolicyStore;
+
+  /**
+   * The description of the static policy
+   */
+  description?: string;
+};
 
 abstract class PolicyBase extends Resource implements IPolicy {
   abstract readonly policyId: string;
@@ -129,6 +146,31 @@ export class Policy extends PolicyBase {
     policyId: string,
   ): IPolicy {
     return Policy.fromPolicyAttributes(scope, id, { policyId });
+  }
+
+  /**
+   * Create a policy based on a file containing a cedar policy. Best practice would be
+   * for the file name to end in `.cedar` but this is not required.
+   *
+   * @param scope The parent creating construct (usually `this`).
+   * @param id The construct id.
+   * @param props A `StaticPolicyFromFileProps` object.
+   */
+  public static fromFile(
+    scope: Construct,
+    id: string,
+    props: StaticPolicyFromFileProps,
+  ): Policy {
+    const policyFileContents = fs.readFileSync(props.path).toString();
+    return new Policy(scope, id, {
+      definition: {
+        static: {
+          statement: policyFileContents,
+          description: props.description || `Created by CDK from file ${props.path}`,
+        },
+      },
+      policyStore: props.policyStore,
+    });
   }
 
   /**

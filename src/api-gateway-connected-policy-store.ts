@@ -9,12 +9,47 @@ import { IdentitySource as AVPIdentitySource } from './identity-source';
 import { PolicyStore, ValidationSettingsMode } from './policy-store';
 
 interface ApiGatewayConnectedPolicyStoreProps {
+  /**
+   * An API Gateway Rest API built with the RestApi L2 construct
+   */
   restApi: RestApi;
+  /**
+   * Pass this if you want to override the lambda authorizer we provide, perhaps
+   * because you want custom logic or want a different language.
+   *
+   * @default a NodeJS20 lambda function, with source code in lambda-src/index.js. It
+   * has the default lambda permissions plus a policy to call VerifiedPermissions:IsAuthorizedwithToken
+   */
   authorizerLambda?: lambda.Function;
+  /**
+   * The type of identity source. Only Cognito is currently supported but once aws-cdk-lib consumes
+   * the model updates related to the reinforce release of oidc IdentitySources, we will enable that.
+   */
   identitySourceType: 'oidc'|'cognito';
-  userPool: UserPool;
-  groupEntityTypeName?: string;
+  /**
+   * A cognito user pool. Required if identitySourceType is set to `cognito`
+   */
+  userPool?: UserPool;
+  /**
+   * The name of the entity type that represents your principal type. This value affects the schema that
+   * is generated, as well as the identity source that is created.
+   *
+   * @default 'User'
+   */
   principalEntityTypeName?: string;
+  /**
+   * The name of the entity type that represents groups of principals. This value affects the schema that is
+   * is generated, as well as the identity source that is created.
+   *
+   * @default 'UserGroup'
+   */
+  groupEntityTypeName?: string;
+  /**
+   * The token type that will be used when calling VerifiedPermissions:IsAuthorizedwithToken. Your client will
+   * call API gateway and pass the token in the `Authorization` header, and the API Gateway authorizer will
+   * relay it to Verified Permissions either as an identity token or an access token, depending on the value
+   * that you specify here.
+   */
   tokenType: 'identityToken'|'accessToken';
 }
 
@@ -50,7 +85,7 @@ export class ApiGatewayConnectedPolicyStore extends Construct {
   readonly authorizerLambda: lambda.Function;
   readonly authorizer: RequestAuthorizer;
   readonly identitySourceType: 'oidc'|'cognito';
-  readonly userPool: UserPool;
+  readonly userPool?: UserPool;
   readonly groupEntityTypeName: string;
   readonly principalEntityTypeName: string;
   readonly identitySource: AVPIdentitySource;
@@ -59,11 +94,17 @@ export class ApiGatewayConnectedPolicyStore extends Construct {
   constructor(scope: Construct, id: string, props: ApiGatewayConnectedPolicyStoreProps) {
     super(scope, id);
     this.restApi = props.restApi;
+    if (props.identitySourceType === 'oidc') {
+      throw new Error('Not implemented yet');
+    }
+    if (props.identitySourceType === 'cognito' && !props.userPool) {
+      throw new Error('userPool is required when identitySourceType is cognito');
+    }
+    this.userPool = props.userPool;
     const apiName = this.restApi.restApiName;
     const namespace = getCedarNamespaceFromApiName(apiName);
-    this.principalEntityTypeName = `${namespace}::${props.principalEntityTypeName || 'User'}`;
-    this.groupEntityTypeName = `${namespace}::${props.groupEntityTypeName || 'UserGroup'}`;
-    this.userPool = props.userPool;
+    this.principalEntityTypeName = props.principalEntityTypeName || 'User';
+    this.groupEntityTypeName = props.groupEntityTypeName || 'UserGroup';
     this.tokenType = props.tokenType;
     this.cedarSchema = this.buildSchema(namespace);
     this.identitySourceType = props.identitySourceType;
@@ -113,20 +154,20 @@ export class ApiGatewayConnectedPolicyStore extends Construct {
       ],
     });
     this.authorizer._attachToApi(this.restApi);
-    this.identitySource = this.createIdentitySource();
+    this.identitySource = this.createIdentitySource(namespace);
 
   }
 
-  private createIdentitySource(): AVPIdentitySource {
+  private createIdentitySource(namespace: string): AVPIdentitySource {
     if (this.identitySourceType === 'cognito') {
       return new AVPIdentitySource(this, 'CognitoIdentitySource', {
         policyStore: this.policyStore,
-        principalEntityType: this.principalEntityTypeName,
+        principalEntityType: `${namespace}::${this.principalEntityTypeName}`,
         configuration: {
           cognitoUserPoolConfiguration: {
-            userPool: this.userPool,
+            userPool: this.userPool!,
             groupConfiguration: {
-              groupEntityType: this.groupEntityTypeName,
+              groupEntityType: `${namespace}::${this.groupEntityTypeName}`,
             },
           },
         },

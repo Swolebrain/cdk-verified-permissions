@@ -1,0 +1,1 @@
+permit(principal == PodcastApp::User::"abc", action, resource in PodcastApp::Application::"PodcastApp");

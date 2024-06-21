@@ -1,6 +1,8 @@
+import * as fs from 'fs';
 import { CfnPolicy } from 'aws-cdk-lib/aws-verifiedpermissions';
 import { IResource, Resource } from 'aws-cdk-lib/core';
 import { Construct } from 'constructs';
+import { checkParsePolicy } from './cedar-helpers';
 import { IPolicyStore } from './policy-store';
 import { IPolicyTemplate } from './policy-template';
 
@@ -115,6 +117,22 @@ abstract class PolicyBase extends Resource implements IPolicy {
   abstract readonly policyType: PolicyType;
 }
 
+export interface IStaticPolicyFromFileProps {
+  /**
+   * The path to the file to be read which contains a single cedar statement representing a policy
+   */
+  readonly path: string;
+  /**
+   * The policy store that the policy will be created under.
+   */
+  readonly policyStore: IPolicyStore;
+
+  /**
+   * The description of the static policy
+   */
+  readonly description?: string;
+}
+
 export class Policy extends PolicyBase {
   /**
    *  Import a policy into the CDK using its id.
@@ -159,6 +177,32 @@ export class Policy extends PolicyBase {
     return new Import(policyType, attrs.policyId);
   }
 
+  /**
+   * Create a policy based on a file containing a cedar policy. Best practice would be
+   * for the file name to end in `.cedar` but this is not required.
+   *
+   * @param scope The parent creating construct (usually `this`).
+   * @param id The construct id.
+   * @param props A `StaticPolicyFromFileProps` object.
+   */
+  public static fromFile(
+    scope: Construct,
+    id: string,
+    props: IStaticPolicyFromFileProps,
+  ): Policy {
+    const policyFileContents = fs.readFileSync(props.path).toString();
+    checkParsePolicy(policyFileContents);
+    return new Policy(scope, id, {
+      definition: {
+        static: {
+          statement: policyFileContents,
+          description: props.description || `${props.path} - Created by CDK`,
+        },
+      },
+      policyStore: props.policyStore,
+    });
+  }
+
   readonly policyId: string;
   readonly policyType: PolicyType;
   readonly definition: PolicyDefinitionProperty;
@@ -176,23 +220,26 @@ export class Policy extends PolicyBase {
       throw new Error('Policy must either be static or templateLinked');
     }
 
-    var definition;
+    let definition;
     if (props.definition.static) {
+      checkParsePolicy(props.definition.static.statement);
       definition = {
         static: {
           ...props.definition.static,
-          statement: props.definition.static!.statement,
+          statement: props.definition.static.statement,
         },
       };
-    } else {
+    } else if (props.definition.templateLinked) {
       definition = {
         templateLinked: {
           policyTemplateId:
-            props.definition.templateLinked!.policyTemplate.policyTemplateId,
-          principal: props.definition.templateLinked!.principal,
-          resource: props.definition.templateLinked!.resource,
+            props.definition.templateLinked.policyTemplate.policyTemplateId,
+          principal: props.definition.templateLinked.principal,
+          resource: props.definition.templateLinked.resource,
         },
       };
+    } else {
+      throw new Error('Policy must either be static or templateLinked');
     }
 
     // resource

@@ -1,0 +1,1 @@
+forbid(principal == PhotoApp::User::"abhi", action, resource == PhotoApp::Photo::"Scope creep");
